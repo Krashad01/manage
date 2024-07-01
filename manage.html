@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Projects</title>
+    <link rel="stylesheet" href="app.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Manage Projects</h1>
+
+        <div class="manage-section">
+            <h2>Add Project for Current Week</h2>
+            <input type="text" id="projectNameCurrent" placeholder="Project Name">
+            <input type="date" id="dueDateCurrent">
+            <input type="text" id="projectDetailsCurrent" placeholder="Project Details">
+            <select id="categoryCurrent">
+                <option value="Sprays">Sprays</option>
+                <option value="Candles">Candles</option>
+                <option value="CarFresheners">Car Fresheners</option>
+            </select>
+            <button onclick="addProject('current')">Add Project</button>
+        </div>
+
+        <div class="manage-section">
+            <h2>Add Project for Next Week</h2>
+            <input type="text" id="projectNameNext" placeholder="Project Name">
+            <input type="date" id="dueDateNext">
+            <input type="text" id="projectDetailsNext" placeholder="Project Details">
+            <select id="categoryNext">
+                <option value="Sprays">Sprays</option>
+                <option value="Candles">Candles</option>
+                <option value="CarFresheners">Car Fresheners</option>
+            </select>
+            <button onclick="addProject('next')">Add Project</button>
+        </div>
+
+        <div class="manage-section">
+            <h2>Remove Project</h2>
+            <select id="removeProjectSelect"></select>
+            <button onclick="removeProject()">Remove Project</button>
+        </div>
+    </div>
+
+    <script>
+        function addProject(week) {
+            const projectName = document.getElementById(`projectName${week.charAt(0).toUpperCase() + week.slice(1)}`).value;
+            const dueDate = document.getElementById(`dueDate${week.charAt(0).toUpperCase() + week.slice(1)}`).value;
+            const projectDetails = document.getElementById(`projectDetails${week.charAt(0).toUpperCase() + week.slice(1)}`).value;
+            const category = document.getElementById(`category${week.charAt(0).toUpperCase() + week.slice(1)}`).value;
+
+            if (projectName && dueDate && projectDetails) {
+                const project = {
+                    name: projectName,
+                    dueDate: dueDate,
+                    details: projectDetails,
+                    category: category
+                };
+
+                let projects = JSON.parse(localStorage.getItem(`${week}WeekProjects`)) || [];
+                projects.push(project);
+                localStorage.setItem(`${week}WeekProjects`, JSON.stringify(projects));
+
+                alert('Project added successfully');
+                loadRemoveProjectOptions();
+            } else {
+                alert('Please fill out all fields');
+            }
+        }
+
+        function removeProject() {
+            const projectSelect = document.getElementById('removeProjectSelect');
+            const selectedOption = projectSelect.options[projectSelect.selectedIndex];
+            const week = selectedOption.getAttribute('data-week');
+            const projectIndex = selectedOption.getAttribute('data-index');
+
+            let projects = JSON.parse(localStorage.getItem(`${week}WeekProjects`)) || [];
+            projects.splice(projectIndex, 1);
+            localStorage.setItem(`${week}WeekProjects`, JSON.stringify(projects));
+
+            alert('Project removed successfully');
+            loadRemoveProjectOptions();
+            displayProjects(week);  // Update the dashboard
+        }
+
+        function loadRemoveProjectOptions() {
+            const projectSelect = document.getElementById('removeProjectSelect');
+            projectSelect.innerHTML = '';
+
+            ['current', 'next'].forEach(week => {
+                const projects = JSON.parse(localStorage.getItem(`${week}WeekProjects`)) || [];
+
+                projects.forEach((project, index) => {
+                    const option = document.createElement('option');
+                    option.text = `${project.name} - ${project.dueDate} (${week} week)`;
+                    option.setAttribute('data-week', week);
+                    option.setAttribute('data-index', index);
+                    projectSelect.add(option);
+                });
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadRemoveProjectOptions();
+        });
+
+        function displayProjects(week) {
+            const projectContainers = {
+                'Sprays': document.getElementById(`${week}WeekSprays`),
+                'Candles': document.getElementById(`${week}WeekCandles`),
+                'CarFresheners': document.getElementById(`${week}WeekCarFresheners`)
+            };
+
+            for (const key in projectContainers) {
+                if (projectContainers.hasOwnProperty(key)) {
+                    projectContainers[key].innerHTML = '';  // Clear existing projects
+                }
+            }
+
+            const projects = JSON.parse(localStorage.getItem(`${week}WeekProjects`)) || [];
+
+            projects.forEach(project => {
+                const projectElement = document.createElement('div');
+                projectElement.className = 'project';
+                projectElement.innerHTML = `<strong>${project.name}</strong> - Due: ${project.dueDate} <br> Details: ${project.details}`;
+                
+                const categoryElement = document.getElementById(`${week}Week${project.category}`);
+                if (categoryElement) {
+                    categoryElement.appendChild(projectElement);
+                }
+            });
+        }
+    </script>
+</body>
+</html>
